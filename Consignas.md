@@ -46,10 +46,10 @@ representar ciertas operaciones sobre las notas:
 - `Fragment ns` crea una canción dada la lista de notas *ns* de tipo
   `[Primitive Pitch]`.
 
-- `Transpose i s` transpone todas las notas de *s* en *i*
+- `Transpose_by i s` transpone todas las notas de *s* en *i*
   semi-tonos. Por ejemplo, si *s* (de tipo `Song`) representa la
   canción `[Note qn (A, 1), Note qn (B, 1), Note qn (C, 1)]`, entonces
-  `Transpose 1 s` representa la canción `[Note qn (As, 1), Note qn (C,
+  `Transpose_by 1 s` representa la canción `[Note qn (As, 1), Note qn (C,
   1), Note qn (Cs, 1)]` (la adición de `s` a la nota indica
   "sostenido", y el Sí sostenido es un Do).
 
@@ -72,7 +72,7 @@ Repeat 4 (Concat (Repeat 4 chord_c) (Repeat 4 chord_g))
 Definido el tipo `Song`, procederemos a definir las siguientes operaciones:
 
 - `unfold s` retorna la canción *s* sin nodos de transporte
-  (`Transpose`) ni repetición (`Repeat`), es decir, en donde estos
+  (`Transpose_by`) ni repetición (`Repeat`), es decir, en donde estos
   nodos son reemplazados por la acción que representan (transponer la
   notas o repetir, respectivamente).
 
