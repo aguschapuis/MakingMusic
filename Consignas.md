@@ -233,7 +233,29 @@ Para instalar Euterpea, primero deben instalar Haskell y Cabal, aunque es posibl
     $ cabal update
     $ cabal install Euterpea
 ```
- 
+
+## Puntos estrella
+
+Para sumar porotos o divertirse un poco pueden hacer un subconjunto arbitrario de estos puntos:
+
+  * Escribir funciones `parallelMin` y `parallelMax` de tipo 
+    `Song -> Song -> Song`, que dadas canciones `s1` y `s2` retorna una nueva
+    `Song` con el resultado de componer dos canciones en paralelo
+    (`Parallel s1' s2'`), donde `s1'` y `s2'` son como `s1` y `s2`
+    pero de forma tal que ambas canciones tengan el mismo tamaño. En
+    el caso de `parallelMin`, se corta la canción mas larga para que
+    tenga el mismo tamaño que la mas corta, y en `parallelMax` se
+    rellena con silencio la mas corta.
+
+  * (Conviene hacer el punto anterior primero. Difícil!) Hacer la función
+    `to_tracks` que convierte una `Song` en otra `Song` equivalente
+    pero que sólo tenga `Parallel`s anidados al comienzo. Por ejemplo,
+    `to_tracks (Concat (Parallel s1 s2) (Parallel s3 s4))`, con `time
+    s1 < time s2` y `time s4 < time s3` devolvería `Parallel (Concat
+    (Concat s1 r1) s3) (Concat s2 (Concat s4 r4))`, donde `r1` y `r2`
+    son silencios por la diferencia entre las sub-canciones.
+
+
 ## Links y datos de interés
 
  * [Sobre las notas](https://es.wikipedia.org/wiki/Nota_(sonido)).
