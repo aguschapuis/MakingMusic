@@ -52,8 +52,6 @@ nextSTone Bf = B
 nextSTone B = C
 nextSTone _ = error "Unsoported note"
 
--- data Notas = Do | Re | Mi | Fa | So | La | Si deriving (Eq,Ord,Enum,Show)
-
 transpose_by :: Int -> Song -> Song
 transpose_by _ (Fragment []) = Fragment []
 transpose_by i (Fragment ((Note dur (pitch, octv)):xs))
@@ -69,7 +67,17 @@ transpose_by i (Parallel sng1 sng2)
 
 -- time :: Song -> Int
 
--- unfould :: Song -> Maybe Song
--- unfould Fragment [] = Nothing
--- unfould (Fragment ls) = Just (Fragment ls)
--- unfould (Transpose i sng) = 
+unfold :: Song -> Maybe Song
+unfold Fragment xs  | (xs == []) =  Nothing
+                    | otherwise = Just (Fragment xs)
+unfold Transpose i sng = Just (transpose_by i (unfold sng))
+unfold Repeat i sng | i == 0 = Nothing
+                    | i == 1 = Just (unfold sng1)
+                    | otherwise = case  (unfold sng1) of 
+                                        (Just x) -> Just(Concat x (Repeat (i-1) x))
+unfold Concat sng1 sng2 = case  (unfold sng1, unfold sng2) of
+                                (Just x, Just y) -> Just (Concat x y)
+                                (_, _) -> Nothing 
+unfold Parallel sng1 sng2 = case  (unfold sng1, unfold sng2) of
+                                    (Just x, Just y) -> Just (Parallel x y)
+                                    (_, _) -> Nothing  
