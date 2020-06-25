@@ -63,7 +63,25 @@ transpose_by i (Concat sng1 sng2)
 transpose_by i (Parallel sng1 sng2)
     = Parallel (transpose_by i sng1) (transpose_by i sng2)
 
--- compute :: Song -> Music Pitch --puede usar unfould--
+compute :: Song -> Maybe(Music Pitch) --puede usar unfould--
+compute Fragment xs | xs == [] = Just(Prim (Rest 0))
+                    | otherwise = case (compute Fragment (tail xs)) of 
+                                        (Just x)    -> Just (Prim((head xs) :+: x))
+                                        Nothing     -> Nothing
+comput Concat sng1 sng2 = case (compute sng1, compute sng2) of
+                                (Just x, Just y)    -> (x :+: y)
+                                (Nothing, Just y)   -> y
+                                (Just x, Nothing)   -> x
+                                (_, _) -> Nothing
+compute Parallel sng1 sng2 = case (compute sng1, compute sng2) of
+                                    (Just x, Just y)    -> (x :=: y)
+                                    (Nothing, Just y)   -> y
+                                    (Just x, Nothing)   -> x
+                                    (_, _)              -> Nothing  
+compute sng = case (unfold sng) of
+                    (Just x)    -> compute x
+                    Nothing     -> Nothing
+
 
 -- time :: Song -> Int
 
@@ -80,4 +98,5 @@ unfold Concat sng1 sng2 = case  (unfold sng1, unfold sng2) of
                                 (_, _) -> Nothing 
 unfold Parallel sng1 sng2 = case  (unfold sng1, unfold sng2) of
                                     (Just x, Just y) -> Just (Parallel x y)
-                                    (_, _) -> Nothing  
+                                    (_, _) -> Nothing
+
