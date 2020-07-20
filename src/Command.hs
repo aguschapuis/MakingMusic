@@ -1,8 +1,8 @@
 module Command where 
 
-data Command a = Add Song
-						 	 | Use1 Int [Song]
-						 	 | Use2 Int Int [Song]
+data Command a = Add a
+				| Use1 Int (a -> a)
+				| Use2 Int Int (a -> a -> a)
 
 
-run :: Command a -> [Song] -> Maybe [Song]
+run :: [Command a] -> [a] -> Maybe [a]
