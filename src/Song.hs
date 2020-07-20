@@ -19,84 +19,114 @@ s2 = Repeat 4 (Concat (Repeat 4 chord_c) (Repeat 4 chord_g))
 s3 :: Song
 s3 = Fragment [Note qn (C, 2), Note qn (D, 2), Note qn (Ds, 2), Rest qn, Note qn (G, 2)]
 
--- s4 :: Song
--- s4 = Transpose 2 (Repeat 3 (Fragment [Note qn (E, 2)]))
+s4 :: Song
+s4 = Transpose_by 2 (Repeat 3 (Fragment [Note qn (E, 2)]))
 
 
 data Song = Fragment [Primitive Pitch]
-          | Tanspose Int Song 
+          | Transpose_by Int Song 
           | Repeat Int Song
           | Concat Song Song
           | Parallel Song Song
         deriving Show
 
-nextSTone :: PitchClass -> PitchClass
-nextSTone Cf = C
-nextSTone C = Cs
-nextSTone Cs = D
-nextSTone Df = D
-nextSTone D = Ds
-nextSTone Ds = E
-nextSTone Ef = E
-nextSTone E = F
-nextSTone Ff = F
-nextSTone F = Fs
-nextSTone Fs = G
-nextSTone Gf = G
-nextSTone G = Gs
-nextSTone Gs = A
-nextSTone Af = A
-nextSTone A = As
-nextSTone As = B
-nextSTone Bf = B
-nextSTone B = C
-nextSTone _ = error "Unsoported note"
+nextPitch :: PitchClass -> PitchClass
+nextPitch Cf = C
+nextPitch C = Cs
+nextPitch Cs = D
+nextPitch Df = D
+nextPitch D = Ds
+nextPitch Ds = E
+nextPitch Ef = E
+nextPitch E = F
+nextPitch Ff = F
+nextPitch F = Fs
+nextPitch Fs = G
+nextPitch Gf = G
+nextPitch G = Gs
+nextPitch Gs = A
+nextPitch Af = A
+nextPitch A = As
+nextPitch As = B
+nextPitch Bf = B
+nextPitch B = C
+nextPitch _ = error "Unsoported note"
 
-transpose_by :: Int -> Song -> Song
-transpose_by _ (Fragment []) = Fragment []
-transpose_by i (Fragment ((Note dur (pitch, octv)):xs))
-    = Concat (Fragment [Note dur (nextSTone pitch, octv)]) (transpose_by i (Fragment xs)) 
-transpose_by i (Fragment ((Rest qn):xs)) 
-    = Concat (Fragment [Rest qn]) (transpose_by i (Fragment xs))
-transpose_by i (Concat sng1 sng2)
-    = Concat (transpose_by i sng1) (transpose_by i sng2)
-transpose_by i (Parallel sng1 sng2)
-    = Parallel (transpose_by i sng1) (transpose_by i sng2)
+nNextsPitchs :: Int -> Primitive Pitch -> Primitive Pitch
+nNextsPitchs _ (Rest qn) = (Rest qn)
+nNextsPitchs 0 tone = tone
+nNextsPitchs n (Note dur (pitch, octv)) = nNextsPitchs (n-1) (Note dur (nextPitch pitch, octv)) 
 
-compute :: Song -> Maybe(Music Pitch) --puede usar unfould--
-compute Fragment xs | xs == [] = Just(Prim (Rest 0))
-                    | otherwise = case (compute Fragment (tail xs)) of 
-                                        (Just x)    -> Just (Prim((head xs) :+: x))
-                                        Nothing     -> Nothing
-comput Concat sng1 sng2 = case (compute sng1, compute sng2) of
-                                (Just x, Just y)    -> (x :+: y)
-                                (Nothing, Just y)   -> y
-                                (Just x, Nothing)   -> x
+transp_by :: Int -> Song -> Song
+transp_by _ (Fragment []) = Fragment []
+transp_by n (Fragment xs)
+    = (Fragment (map (nNextsPitchs n) xs)) 
+transp_by i (Concat sng1 sng2)
+    = Concat (transp_by i sng1) (transp_by i sng2)
+transp_by i (Parallel sng1 sng2)
+    = Parallel (transp_by i sng1) (transp_by i sng2)
+
+
+-- Funcion para transformar el tipo Maybe de computeBis 
+
+compute :: Song -> Music Pitch
+compute a = case computeBis a of
+                (Just x) -> x
+                Nothing  -> Prim (Rest 0)
+
+
+-- Remplaza todos los elementos de Song por otros reproducibles por Euterpea
+
+computeBis :: Song -> Maybe (Music Pitch)
+computeBis (Fragment []) = Just (Prim (Rest 0)) 
+computeBis (Fragment xs) = case computeBis (Fragment(tail xs)) of 
+                                    (Just x)    -> Just (Prim(head xs) :+: x)
+                                    Nothing     -> Nothing
+computeBis (Concat sng1 sng2) = case (computeBis sng1, computeBis sng2) of
+                                (Just x, Just y)    -> Just (x :+: y)
+                                -- (Nothing, Just y)   -> Just (y)
+                                -- (Just x, Nothing)   -> Just (x)
                                 (_, _) -> Nothing
-compute Parallel sng1 sng2 = case (compute sng1, compute sng2) of
-                                    (Just x, Just y)    -> (x :=: y)
-                                    (Nothing, Just y)   -> y
-                                    (Just x, Nothing)   -> x
+computeBis (Parallel sng1 sng2) = case (computeBis sng1, computeBis sng2) of
+                                    (Just x, Just y)    -> Just (x :=: y)
+                                    -- (Nothing, Just y)   -> Just (y)
+                                    -- (Just x, Nothing)   -> Just (x)
                                     (_, _)              -> Nothing  
-compute sng = case (unfold sng) of
-                    (Just x)    -> compute x
+computeBis sng = case (unfold sng) of
+                    (Just x)    -> computeBis x
                     Nothing     -> Nothing
 
 
--- time :: Song -> Int
-
 unfold :: Song -> Maybe Song
-unfold Fragment xs  | (xs == []) =  Nothing
-                    | otherwise = Just (Fragment xs)
-unfold Transpose i sng = Just (transpose_by i (unfold sng))
-unfold Repeat i sng | i == 0 = Nothing
-                    | i == 1 = Just (unfold sng1)
-                    | otherwise = case  (unfold sng1) of 
+unfold (Fragment xs)  | (xs == []) =  Nothing
+                      | otherwise = Just (Fragment xs)
+unfold (Transpose_by i sng) = case (unfold sng) of
+                                  Just x -> Just (transp_by i x)
+                                  Nothing -> Nothing
+unfold (Repeat i sng) | i == 0 = Nothing
+                      | i == 1 = unfold sng
+                      | otherwise = case (unfold sng) of 
                                         (Just x) -> Just(Concat x (Repeat (i-1) x))
-unfold Concat sng1 sng2 = case  (unfold sng1, unfold sng2) of
-                                (Just x, Just y) -> Just (Concat x y)
-                                (_, _) -> Nothing 
-unfold Parallel sng1 sng2 = case  (unfold sng1, unfold sng2) of
+                                        Nothing -> Nothing
+unfold (Concat sng1 sng2) = case  (unfold sng1, unfold sng2) of
+                                  (Just x, Just y) -> Just (Concat x y)
+                                  (_, _) -> Nothing 
+unfold (Parallel sng1 sng2) = case  (unfold sng1, unfold sng2) of
                                     (Just x, Just y) -> Just (Parallel x y)
                                     (_, _) -> Nothing
 
+
+--- para casos de error en el tiempo ---
+minDur :: Dur
+minDur = -9999999
+
+--- Calcula el tiempo y el en caso de que haya error devuelve minDur
+time :: Song -> Dur
+time (Fragment []) = 0
+time (Fragment ((Note t a):xs)) = t + time (Fragment xs)
+time (Fragment ((Rest t):xs))   = t + time (Fragment xs) -- para los silencios
+time (Concat sng1 sng2) = time sng1 + time sng2
+time (Parallel sng1 sng2) = max (time sng1) (time sng2)
+time s = case unfold s of
+            Just x  -> time x
+            Nothing -> minDur  
