@@ -92,9 +92,6 @@ computeBis (Parallel sng1 sng2) = case (computeBis sng1, computeBis sng2) of
                                     -- (Nothing, Just y)   -> Just (y)
                                     -- (Just x, Nothing)   -> Just (x)
                                     (_, _)              -> Nothing  
-computeBis sng = case (unfold sng) of
-                    (Just x)    -> computeBis x
-                    Nothing     -> Nothing
 
 
 unfold :: Song -> Maybe Song
