@@ -156,7 +156,30 @@ cutSong sng1 newDur = case unfold sng1 of
 
 
 
-parallelmin :: Song -> Song -> Song
-parallelmin sng1 sng2 | (time sng1 > time sng2) = Parallel (cutSong sng1 (time sng2)) sng2 
+parallelMin :: Song -> Song -> Song
+parallelMin sng1 sng2 | (time sng1 > time sng2) = Parallel (cutSong sng1 (time sng2)) sng2 
                       | (time sng1 < time sng2) = Parallel sng1 (cutSong sng2 (time sng1))
                       | otherwise = Parallel sng1 sng2 -- caso igual duracion
+
+add_rest :: Dur -> [Primitive Pitch] -> [Primitive Pitch]
+add_rest dur [] = [Rest dur]
+add_rest dur (x:xs) = x : (add_rest dur xs)
+
+add_silence :: Dur -> Song -> Song
+add_silence 0 sng1 = sng1
+add_silence dur (Fragment []) = Fragment[Rest dur]
+add_silence dur (Fragment xs) = Fragment (add_rest dur xs)
+add_silence dur (Parallel sng1 sng2)
+            | (time sng1) < dur && (time sng2) < dur = Parallel (add_silence dur sng1) (add_silence dur sng2)
+            | (time sng1) >= dur && (time sng2) < dur = Parallel sng1 (add_silence dur sng2)
+            | (time sng1) < dur && (time sng2) >= dur = Parallel (add_silence dur sng1) sng2
+            | otherwise = (Parallel sng1 sng2)
+add_silence dur (Concat sng1 sng2) = Parallel sng1 (add_silence dur sng2)
+add_silence dur sng1 = case unfold sng1 of
+                    Just x -> add_silence dur x
+                    Nothing -> error("Caso Nothing add_silence")
+
+parallelMax :: Song -> Song -> Song
+parallelMax sng1 sng2 | (time sng1 > time sng2) = Parallel sng1  (add_silence (time sng1-time sng2) sng2)
+                      | (time sng1 < time sng2) = Parallel (add_silence (time sng2-time sng1) sng1) sng2
+                      | otherwise = (Parallel sng1 sng2) 
