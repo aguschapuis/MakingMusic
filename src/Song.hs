@@ -117,7 +117,7 @@ unfold (Parallel sng1 sng2) = case  (unfold sng1, unfold sng2) of
 minDur :: Dur
 minDur = -9999999
 
---- Calcula el tiempo y el en caso de que haya error devuelve minDur
+--- Calcula el tiempo y el en caso de que haya error devuelve minDur 
 time :: Song -> Dur
 time (Fragment []) = 0
 time (Fragment ((Note t a):xs)) = t + time (Fragment xs)
@@ -127,3 +127,36 @@ time (Parallel sng1 sng2) = max (time sng1) (time sng2)
 time s = case unfold s of
             Just x  -> time x
             Nothing -> minDur  
+
+my_remove :: Dur -> [Primitive Pitch] -> [Primitive Pitch]
+my_remove _ [] = []
+my_remove 0 xs = xs
+my_remove newDur ((Rest dur): xs)  | (dur < newDur) = (Rest dur): my_remove (newDur-dur) xs -- newDur (nueva duracion) es el tiempo que tiene que quedar xs
+                                | (dur == newDur) = [Rest dur]
+                                | otherwise = [Rest newDur] -- queda el silencio pero con el tiempo newDur
+my_remove newDur ((Note dur p): xs) | (dur < newDur) = (Note dur p): my_remove (newDur-dur) xs 
+                                 | (dur == newDur) = [Note dur p]
+                                 | otherwise = [Note newDur p] 
+
+cutSong :: Song -> Dur ->  Song
+cutSong (Fragment []) newDur= Fragment []
+cutSong (Fragment xs) newDur = Fragment (my_remove newDur xs)
+cutSong (Parallel sng1 sng2) newDur 
+            | (time sng1 > newDur) && (time sng2 > newDur) = Parallel (cutSong sng1 newDur) (cutSong sng2 newDur)
+            | (time sng1 > newDur) && (time sng2 <= newDur) = Parallel (cutSong sng1 newDur) sng2
+            | (time sng1 <= newDur) && (time sng2 > newDur) = Parallel sng1 (cutSong sng2 newDur)
+            | otherwise = Parallel sng1 sng2
+cutSong (Concat sng1 sng2) newDur 
+            | (time sng1 <= newDur) && (time sng2 > (newDur - (time sng1))) = Concat sng1 (cutSong sng2 (newDur - time sng1))
+            | (time sng1 > newDur)  = cutSong sng1 newDur
+            | otherwise = Concat sng1 sng2
+cutSong sng1 newDur = case unfold sng1 of
+                    Just x -> cutSong x newDur
+                    Nothing -> error("Caso Nothing cutSong")
+
+
+
+parallelmin :: Song -> Song -> Song
+parallelmin sng1 sng2 | (time sng1 > time sng2) = Parallel (cutSong sng1 (time sng2)) sng2 
+                      | (time sng1 < time sng2) = Parallel sng1 (cutSong sng2 (time sng1))
+                      | otherwise = Parallel sng1 sng2 -- caso igual duracion
