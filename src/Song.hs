@@ -2,27 +2,6 @@ module Song where
 
 import Euterpea
 
---Ejemplos para probar-- 
-
-s1 :: Song
-s1 = Fragment [Note qn (A, 1), Note qn (B, 1), Note qn (C, 1)]
-
-chord_c :: Song
-chord_c = Parallel (Fragment [Note qn (C, 3)]) (Fragment [Note qn (G, 3)])
-
-chord_g :: Song
-chord_g = Parallel (Fragment [Note qn (G, 3)]) (Fragment [Note qn (D, 3)])
-
-s2 :: Song
-s2 = Repeat 4 (Concat (Repeat 4 chord_c) (Repeat 4 chord_g))
-
-s3 :: Song
-s3 = Fragment [Note qn (C, 2), Note qn (D, 2), Note qn (Ds, 2), Rest qn, Note qn (G, 2)]
-
-s4 :: Song
-s4 = Transpose_by 2 (Repeat 3 (Fragment [Note qn (E, 2)]))
-
-
 data Song = Fragment [Primitive Pitch]
           | Transpose_by Int Song 
           | Repeat Int Song
@@ -65,6 +44,8 @@ transp_by i (Concat sng1 sng2)
     = Concat (transp_by i sng1) (transp_by i sng2)
 transp_by i (Parallel sng1 sng2)
     = Parallel (transp_by i sng1) (transp_by i sng2)
+transp_by i (Repeat n sng1)
+    = Repeat n (transp_by i sng1)
 
 
 -- Funcion para transformar el tipo Maybe de computeBis 
@@ -84,14 +65,14 @@ computeBis (Fragment xs) = case computeBis (Fragment(tail xs)) of
                                     Nothing     -> Nothing
 computeBis (Concat sng1 sng2) = case (computeBis sng1, computeBis sng2) of
                                 (Just x, Just y)    -> Just (x :+: y)
-                                -- (Nothing, Just y)   -> Just (y)
-                                -- (Just x, Nothing)   -> Just (x)
                                 (_, _) -> Nothing
 computeBis (Parallel sng1 sng2) = case (computeBis sng1, computeBis sng2) of
                                     (Just x, Just y)    -> Just (x :=: y)
-                                    -- (Nothing, Just y)   -> Just (y)
-                                    -- (Just x, Nothing)   -> Just (x)
-                                    (_, _)              -> Nothing  
+                                    (_, _)              -> Nothing
+computeBis sng1 = case unfold sng1 of
+                    Just x -> computeBis x
+                    Nothing -> error ("Caso nothing computeBis")                                    
+
 
 
 unfold :: Song -> Maybe Song
