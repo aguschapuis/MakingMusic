@@ -1,7 +1,6 @@
 module Command where 
 
 import Song
--- import Example
 
 data Command a = Add a
                | Use1 Int (a -> a) --- use 1 (repeat 4)
@@ -9,7 +8,6 @@ data Command a = Add a
 
 --- Puede fallar cuando los indices esten fuera de rango (devolver Nothing)
 --- Es el que construye el stack
-
 
 run :: [Command a] -> [a] -> Maybe [a]
 run [] stack = Just stack

@@ -123,9 +123,9 @@ cutSong :: Song -> Dur ->  Song
 cutSong (Fragment []) newDur= Fragment []
 cutSong (Fragment xs) newDur = Fragment (my_remove newDur xs)
 cutSong (Parallel sng1 sng2) newDur 
-            | (time sng1 > newDur) && (time sng2 > newDur) = Parallel (cutSong sng1 newDur) (cutSong sng2 newDur)
-            | (time sng1 > newDur) && (time sng2 <= newDur) = Parallel (cutSong sng1 newDur) sng2
-            | (time sng1 <= newDur) && (time sng2 > newDur) = Parallel sng1 (cutSong sng2 newDur)
+            | (time sng1) > newDur && (time sng2) > newDur = Parallel (cutSong sng1 newDur) (cutSong sng2 newDur)
+            | (time sng1) > newDur && (time sng2) <= newDur = Parallel (cutSong sng1 newDur) sng2
+            | (time sng1) <= newDur && (time sng2) > newDur = Parallel sng1 (cutSong sng2 newDur)
             | otherwise = Parallel sng1 sng2
 cutSong (Concat sng1 sng2) newDur 
             | (time sng1 <= newDur) && (time sng2 > (newDur - (time sng1))) = Concat sng1 (cutSong sng2 (newDur - time sng1))
