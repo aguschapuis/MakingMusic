@@ -23,7 +23,7 @@ chord_g :: Song
 chord_g = Parallel (Fragment [Note qn (G, 3)]) (Fragment [Note qn (D, 3)])
 
 s2 :: Song
-s2 = Transpose_by 4 ((Concat (Repeat 4 chord_c) (Repeat 4 chord_g)))
+s2 = Transpose_by 4 ((Concat chord_c (Repeat 2 chord_g)))
 
 
 add_chord_c = Add (Parallel (Fragment [Note qn (C, 3)]) (Fragment [Note qn (G, 3)]))

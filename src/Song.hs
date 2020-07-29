@@ -77,16 +77,14 @@ computeBis sng1 = case unfold sng1 of
                     Just x -> computeBis x
                     Nothing -> error ("Caso nothing computeBis")                                    
 
---- Transforma el maybe song en Song para que pueda ser usado por el Concat
-transformMaybe :: Maybe Song -> Song
-transformMaybe sng = case sng of 
-                Just x -> x
-                Nothing -> Fragment []
+
+concatMaybes :: Maybe Song -> Maybe Song -> Maybe Song
+concatMaybes (Just sng1) (Just sng2) = Just (Concat sng1 sng2) 
 
 -- Funciones Auxiliares para Repeat
 repeatN :: Int -> Maybe Song -> Maybe Song
 repeatN 1 sng = sng
-repeatN n sng = Just (Concat (transformMaybe sng) (transformMaybe (repeatN (n-1) sng)))
+repeatN n sng = concatMaybes sng (repeatN (n-1) sng)
 
 
 --- reemplaza los nodos de transporte por la accion que representa
