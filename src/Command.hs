@@ -15,6 +15,8 @@ run (Add a : xs) stack = run xs (a :stack)
 run ((Use1 n fun) : xs) stack | n > (length stack -1)  = Nothing
                               | n < 0 = Nothing
                               | otherwise = (run xs (fun (stack !! n) : stack))
-run ((Use2 n1 n2 fun) : xs) stack | n1 > (length stack -1) || n2 > (length stack -1) = Nothing
+run ((Use2 n1 n2 fun) : xs) stack | n1 > (length stack -1) || n2 > (length stack -1) 
+                                        = Nothing
                                   | n1 < 0 || n2 < 0 = Nothing
-                                  | otherwise = (run xs ((fun (stack!!n1) (stack!!n2)) : stack))
+                                  | otherwise 
+                                        = (run xs ((fun (stack!!n1) (stack!!n2)) : stack))
